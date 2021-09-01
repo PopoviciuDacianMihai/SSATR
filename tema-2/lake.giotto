@@ -1,0 +1,108 @@
+
+/////        sensors       /////
+
+sensor
+    real_port levelZ uses GetLevelZ;
+    real_port levelL uses GetLevelL;
+    real_port levelM uses GetLevelM;
+    real_port levelH uses GetLevelH;
+
+
+/////        actuators       /////
+
+actuator
+    real_port generator1 uses StartGenerator1;
+    real_port generator2 uses StartGenerator2;
+
+
+/////        outputs       /////
+
+output
+    real_port start1 := real_zero;
+    real_port stop1  := real_zero;
+    real_port start2 := real_zero;
+    real_port stop2  := real_zero;
+    real_port u11    := real_zero;
+    real_port u12    := real_zero;
+    real_port u21    := real_zero;
+    real_port u22    := real_zero;
+
+
+/////        tasks       /////
+
+task DEC(real_port lvlZ, real_port lvlL, real_port lvlM, real_port lvlH)
+    output (start1, stop1, start2, stop2) state () {
+        schedule Generator(start1, stop1, start2, stop2)
+}
+
+task DTC1(real_port on1, real_port off1) output (u11, u12) state () {
+    schedule ControlGen1(u11, u12)
+}
+
+task DTC2(real_port on2, real_port off2) output (u21, u22) state () {
+    schedule ControlGen2(u21, u22)
+}
+
+
+/////        actuator drivers       /////
+
+driver firstGenerator(start1, stop1) output (real_port first) {
+    if constant_true() then ComputeGen1Control(start1, stop1, first)
+}
+
+driver secondGenerator(start2, stop2) output (real_port second) {
+    if constant_true() then ComputeGen2Control(start2, stop2, second)
+}
+
+
+/////        input drivers       /////
+
+driver getLevel(levelZ, levelL, levelM, levelH) output (real_port on1, real_port off1, real_port on2, real_port off2) {
+    if constant_true() then copy_real_port(levelZ, levelL, levelM, levelH, on1, off1, on2, off2)
+}
+
+
+/////        mode switch drivers       /////
+
+driver turnOnGen1(u11, u12) output () {
+    if TurnOnGen1(u11, u12) then dummy()
+}
+
+driver turnOffGen1(u11, u12) output () {
+    if TurnOffGen1(u11, u12) then dummy()
+}
+
+driver turnOnGen2(u21, u22) output () {
+    if TurnOnGen2(u21, u22) then dummy()
+}
+
+driver turnOffGen2(u21, u22) output () {
+    if TurnOffGen2(u21, u22) then dummy()
+}
+
+
+/////        modes       /////
+
+start waterLevelCheck {
+    mode waterLevelCheck() period 1000 {
+        exitfreq 1 do generator1ON(turnOnGen1);
+        taskfreq 1 do DEC(getLevel);
+    }
+    
+    mode generator1ON() period 1000 {
+        actfreq 10 do generator1(firstGenerator);
+        exitfreq 1 do waterLevelCheck(turnOffGen1);
+        exitfreq 1 do generator1And2ON(turnOnGen2);
+        taskfreq 1 do DEC(getLevel);
+        //taskfreq 1 do DTC1(firstGenerator);
+    }
+    
+    mode generator1And2ON() period 1000 {
+        actfreq 10 do generator1(firstGenerator);
+        actfreq 10 do generator2(secondGenerator);
+        exitfreq 1 do generator1ON(turnOffGen2);
+        taskfreq 1 do DEC(getLevel);
+        //taskfreq 1 do DTC1(firstGenerator);
+        //taskfreq 1 do DTC2(secondGenerator);
+    }
+}

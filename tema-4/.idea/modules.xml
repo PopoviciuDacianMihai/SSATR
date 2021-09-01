@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/heater simulator/heater simulator.iml" filepath="$PROJECT_DIR$/heater simulator/heater simulator.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/tema-4.iml" filepath="$PROJECT_DIR$/.idea/tema-4.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tipping/tipping.iml" filepath="$PROJECT_DIR$/tipping/tipping.iml" />
+    </modules>
+  </component>
+</project>
